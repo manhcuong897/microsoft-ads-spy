@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microsoft Ads Spy Tool - Hệ Thống Do Thám Chiến Dịch Quảng Cáo</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Vanilla CSS Link -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Animated Gradients -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+
+  <div class="container">
+    <!-- Header Section -->
+    <header class="header">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <i class="fa-solid fa-user-secret"></i>
+        </div>
+        <div>
+          <h1>MS Ads <span class="accent-text">Spy Tool</span></h1>
+          <p class="subtitle">Phân tích và theo dõi chiến dịch quảng cáo đối thủ trên Microsoft Ads</p>
+        </div>
+      </div>
+      <div class="header-badge">
+        <span class="status-dot green"></span>
+        <span class="badge-text">API Live Connection</span>
+      </div>
+    </header>
+
+    <!-- Search Section (Google Style) -->
+    <div class="search-section-wrapper">
+      <form id="search-form" class="google-search-bar">
+        <div class="search-icon-wrapper">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <input type="text" id="advertiser-id" placeholder="Ví dụ: 138051832" required autocomplete="off">
+        
+        <div class="limit-selector-wrapper">
+          <label for="limit-select"><i class="fa-solid fa-list-ol"></i> Giới hạn:</label>
+          <select id="limit-select">
+            <option value="20">20 bản ghi</option>
+            <option value="50" selected>50 bản ghi</option>
+            <option value="100">100 bản ghi</option>
+            <option value="200">200 bản ghi</option>
+            <option value="500">500 bản ghi</option>
+            <option value="1000">Tối đa (1000 bản ghi)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="google-search-btn" id="search-btn">
+          <span>Do thám</span>
+          <i class="fa-solid fa-crosshairs"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Advertiser Info Panel (Horizontal, hidden by default) -->
+    <div class="glass-card advertiser-info-card hidden" id="advertiser-info-panel">
+      <h3><i class="fa-solid fa-circle-info"></i> Thông tin đối thủ</h3>
+      <div class="info-list info-list-horizontal">
+        <div class="info-item">
+          <span class="info-label">Tên nhà quảng cáo:</span>
+          <span class="info-value" id="adv-name">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Mã ID:</span>
+          <span class="info-value code" id="adv-id">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Quốc gia đăng ký:</span>
+          <span class="info-value" id="adv-country">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Trạng thái xác minh:</span>
+          <span class="info-value" id="adv-verified">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Tổng số quảng cáo:</span>
+          <span class="info-value text-cyan" style="font-weight: 700;" id="adv-total-ads">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Dashboard Layout -->
+    <main class="dashboard-grid">
+      
+      <!-- Right Main Panel: Stats & Results -->
+      <section class="main-content-panel">
+        
+        <!-- Welcome state (Shown by default) -->
+        <div class="glass-card welcome-panel" id="welcome-panel">
+          <div class="welcome-icon">
+            <i class="fa-solid fa-radar fa-spin-slow"></i>
+          </div>
+          <h2>Bắt đầu do thám quảng cáo</h2>
+          <p>Nhập mã nhà quảng cáo ở thanh tìm kiếm phía trên để quét các chiến dịch quảng cáo, xem domain phân phối, ngày chạy, phân loại và hình ảnh mẫu quảng cáo.</p>
+        </div>
+
+        <!-- Loading State (Hidden by default) -->
+        <div class="glass-card loading-panel hidden" id="loading-panel">
+          <div class="loading-spinner-wrapper">
+            <div class="spinner"></div>
+            <div class="spinner-pulse"></div>
+          </div>
+          <h3 id="loading-title">Đang xác thực nhà quảng cáo...</h3>
+          <p id="loading-desc">Vui lòng chờ trong giây lát khi hệ thống kết nối với Microsoft Ad Library.</p>
+        </div>
+
+        <!-- Error State (Hidden by default) -->
+        <div class="glass-card error-panel hidden" id="error-panel">
+          <div class="error-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <h3>Không thể tải dữ liệu</h3>
+          <p id="error-message">Mã ID nhà quảng cáo không hợp lệ hoặc không có kết nối mạng.</p>
+        </div>
+
+        <!-- Results Dashboard (Hidden by default, shown when campaigns loaded) -->
+        <div class="dashboard-results hidden" id="dashboard-results">
+          
+          <!-- Warning Banner (Hidden by default) -->
+          <div class="warning-banner hidden" id="api-warning-banner">
+            <i class="fa-solid fa-circle-exclamation"></i> Có <span id="failed-details-count">0</span> quảng cáo không thể hiển thị ngày chính xác do giới hạn kết nối của Microsoft Ads (được đánh dấu màu vàng).
+          </div>
+
+          <!-- Stats Row -->
+          <div class="stats-row">
+            <div class="glass-card stats-card">
+              <div class="stats-icon text-cyan"><i class="fa-solid fa-server"></i></div>
+              <div class="stats-data">
+                <span class="stats-val" id="stat-total-campaigns">0</span>
+                <span class="stats-lbl">Tổng quảng cáo</span>
+              </div>
+            </div>
+            <div class="glass-card stats-card">
+              <div class="stats-icon text-green"><i class="fa-solid fa-circle-play"></i></div>
+              <div class="stats-data">
+                <span class="stats-val" id="stat-active-campaigns">0</span>
+                <span class="stats-lbl">Đang hoạt động</span>
+              </div>
+            </div>
+            <div class="glass-card stats-card">
+              <div class="stats-icon text-yellow"><i class="fa-solid fa-circle-stop"></i></div>
+              <div class="stats-data">
+                <span class="stats-val" id="stat-completed-campaigns">0</span>
+                <span class="stats-lbl">Đã dừng/kết thúc</span>
+              </div>
+            </div>
+            <div class="glass-card stats-card">
+              <div class="stats-icon text-purple"><i class="fa-solid fa-globe"></i></div>
+              <div class="stats-data">
+                <span class="stats-val" id="stat-unique-domains">0</span>
+                <span class="stats-lbl">Domain mục tiêu</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter / Search Toolbar -->
+          <div class="glass-card toolbar-card">
+            <div class="toolbar-search">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="filter-search" placeholder="Lọc theo tên chiến dịch hoặc domain...">
+            </div>
+            <div class="toolbar-actions">
+              <div class="view-switcher">
+                <button type="button" class="btn-view-mode active" id="btn-view-card" title="Xem dạng thẻ">
+                  <i class="fa-solid fa-grip"></i>
+                </button>
+                <button type="button" class="btn-view-mode" id="btn-view-table" title="Xem dạng bảng Excel">
+                  <i class="fa-solid fa-table"></i>
+                </button>
+              </div>
+              <button type="button" class="btn-export" id="btn-export-csv" title="Xuất dữ liệu Excel/CSV">
+                <i class="fa-solid fa-file-excel"></i> <span>Xuất Excel</span>
+              </button>
+            </div>
+            <div class="toolbar-filters">
+              <div class="filter-select-group">
+                <label for="filter-status"><i class="fa-solid fa-toggle-on"></i></label>
+                <select id="filter-status">
+                  <option value="all">Tất cả trạng thái</option>
+                  <option value="active">Đang hoạt động</option>
+                  <option value="completed">Đã dừng</option>
+                </select>
+              </div>
+
+              <div class="filter-select-group">
+                <label for="filter-type"><i class="fa-solid fa-photo-film"></i></label>
+                <select id="filter-type">
+                  <option value="all">Tất cả định dạng</option>
+                  <option value="Hình ảnh">Hình ảnh</option>
+                  <option value="Video">Video</option>
+                  <option value="Tìm kiếm (Văn bản)">Văn bản (Tìm kiếm)</option>
+                </select>
+              </div>
+
+              <div class="filter-select-group">
+                <label for="sort-by"><i class="fa-solid fa-sort"></i></label>
+                <select id="sort-by">
+                  <option value="date-desc">Mới nhất (Ngày bắt đầu)</option>
+                  <option value="date-asc">Cũ nhất (Ngày bắt đầu)</option>
+                  <option value="days-desc">Số ngày chạy (Nhiều nhất)</option>
+                  <option value="days-asc">Số ngày chạy (Ít nhất)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campaigns Grid -->
+          <div class="campaigns-grid" id="campaigns-list-container">
+            <!-- Campaign cards rendered dynamically by app.js -->
+          </div>
+
+          <!-- Campaigns Table View (Excel format) -->
+          <div class="table-wrapper hidden" id="campaigns-table-container">
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">STT</th>
+                  <th>Tiêu đề / Nội dung quảng cáo</th>
+                  <th>Domain</th>
+                  <th style="width: 100px;">Định dạng</th>
+                  <th style="width: 120px;">Trạng thái</th>
+                  <th style="width: 100px;">Bắt đầu</th>
+                  <th style="width: 100px;">Kết thúc</th>
+                  <th style="width: 90px; text-align: center;">Số ngày</th>
+                  <th style="width: 80px; text-align: center;">Ảnh mẫu</th>
+                  <th style="width: 120px; text-align: center;">Xem chi tiết</th>
+                </tr>
+              </thead>
+              <tbody id="campaigns-table-body">
+                <!-- Rows rendered dynamically by app.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty filter state -->
+          <div class="glass-card welcome-panel hidden" id="no-results-panel">
+            <div class="welcome-icon">
+              <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <h3>Không tìm thấy quảng cáo nào phù hợp</h3>
+            <p>Hãy thử thay đổi từ khóa hoặc điều kiện bộ lọc của bạn.</p>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- Image Lightbox Modal for Full Preview -->
+  <div class="lightbox" id="image-lightbox">
+    <span class="lightbox-close" id="lightbox-close">&times;</span>
+    <img class="lightbox-content" id="lightbox-img" src="" alt="Full Preview">
+    <div class="lightbox-caption" id="lightbox-caption"></div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>&copy; 2026 MS Ads Spy Tool. Phát triển bởi Antigravity. Tất cả các quyền được bảo lưu.</p>
+  </footer>
+
+  <!-- Script Link -->
+  <script src="app.js"></script>
+</body>
+</html>
