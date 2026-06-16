@@ -550,75 +550,58 @@ btnViewTable.addEventListener('click', () => {
   applyFiltersAndSort();
 });
 
-// CSV Export Listener (supports Unicode for Excel)
+// Excel Export Listener (uses SheetJS)
 btnExportCsv.addEventListener('click', () => {
   if (filteredCampaigns.length === 0) {
     alert('Không có dữ liệu chiến dịch để xuất file!');
     return;
   }
   
-  // Helper to escape CSV cell values correctly
-  const escapeCSVValue = (val) => {
-    if (val === null || val === undefined) return '""';
-    const stringVal = String(val);
-    return `"${stringVal.replace(/"/g, '""').replace(/\r?\n|\r/g, ' ')}"`;
-  };
-
-  // Define columns
-  const headers = [
-    'STT',
-    'Tên chiến dịch/Quảng cáo',
-    'Nội dung mô tả',
-    'Domain phân phối',
-    'Định dạng quảng cáo',
-    'Trạng thái',
-    'Ngày bắt đầu',
-    'Ngày kết thúc',
-    'Số ngày chạy',
-    'Link mẫu quảng cáo',
-    'Link Landing Page'
-  ];
-  
-  const csvRows = [headers.map(h => escapeCSVValue(h)).join(',')];
+  // Mảng dữ liệu cho Excel
+  const excelData = [];
   
   filteredCampaigns.forEach((ad, index) => {
-    const row = [
-      index + 1,
-      escapeCSVValue(ad.projectName),
-      escapeCSVValue(ad.description),
-      escapeCSVValue(ad.domain),
-      escapeCSVValue(ad.adCategory),
-      escapeCSVValue(ad.status),
-      escapeCSVValue(formatDate(ad.startDate, false)),
-      escapeCSVValue(formatDate(ad.endDate, true)),
-      ad.runDays,
-      escapeCSVValue(ad.adLibraryPreviewUrl),
-      escapeCSVValue(ad.landingPageUrl || '')
-    ];
-    csvRows.push(row.join(','));
+    excelData.push({
+      'STT': index + 1,
+      'Tên chiến dịch/Quảng cáo': ad.projectName,
+      'Nội dung mô tả': ad.description || '',
+      'Domain phân phối': ad.domain,
+      'Định dạng quảng cáo': ad.adCategory,
+      'Trạng thái': ad.status,
+      'Ngày bắt đầu': formatDate(ad.startDate, false),
+      'Ngày kết thúc': formatDate(ad.endDate, true),
+      'Số ngày chạy': ad.runDays,
+      'Link mẫu quảng cáo': ad.adLibraryPreviewUrl,
+      'Link Landing Page': ad.landingPageUrl || ''
+    });
   });
-  
-  // Use 'sep=,' directive for Excel to automatically use commas as separators,
-  // and UTF-8 BOM so Excel displays Vietnamese characters properly.
-  const csvContent = '\uFEFFsep=,\n' + csvRows.join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = window.URL.createObjectURL(blob);
-  
+
+  // Tạo Worksheet và Workbook
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Danh sách chiến dịch");
+
+  // Định dạng độ rộng cột (Column widths)
+  const wscols = [
+    {wch: 5},   // STT
+    {wch: 40},  // Tên chiến dịch
+    {wch: 50},  // Nội dung mô tả
+    {wch: 25},  // Domain
+    {wch: 20},  // Định dạng
+    {wch: 15},  // Trạng thái
+    {wch: 15},  // Ngày BĐ
+    {wch: 15},  // Ngày KT
+    {wch: 15},  // Số ngày
+    {wch: 40},  // Link mẫu QC
+    {wch: 40}   // Link Landing
+  ];
+  worksheet['!cols'] = wscols;
+
   const advNameClean = advertiserData ? advertiserData.advertiserName.replace(/[^a-zA-Z0-9]/g, '_') : 'Advertiser';
-  const filename = `MSAds_Spy_${advNameClean}_${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = `MSAds_Spy_${advNameClean}_${new Date().toISOString().slice(0, 10)}.xlsx`;
   
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  
-  // A tiny delay ensures the browser processes the download action before resources are removed
-  setTimeout(() => {
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  }, 100);
+  // Xuất file XLSX
+  XLSX.writeFile(workbook, filename);
 });
 
 // Image Lightbox Functions
